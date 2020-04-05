@@ -80,6 +80,17 @@ steps:
   commands:
   - ./release/drone-circleci --help
 
+- name: publish-dryrun
+  pull: always
+  image: plugins/docker:18
+  settings:
+    repo: han0110/drone-circleci
+    dry_run: true
+    dockerfile: docker/Dockerfile
+  when:
+    event:
+    - pull_request
+
 - name: publish
   pull: always
   image: plugins/docker:18
