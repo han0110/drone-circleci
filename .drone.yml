@@ -1,0 +1,122 @@
+kind: pipeline
+name: test
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: vet
+  pull: always
+  image: golang:1.14
+  commands:
+  - go vet ./...
+  environment:
+    GO111MODULE: on
+  volumes:
+  - name: gopath
+    path: /go
+
+- name: test
+  pull: always
+  image: golang:1.14
+  commands:
+  - go test -cover ./...
+  environment:
+    GO111MODULE: on
+    CIRCLECI_API_TOKEN:
+      from_secret: circleci_api_token
+  volumes:
+  - name: gopath
+    path: /go
+
+volumes:
+- name: gopath
+  temp: {}
+
+trigger:
+  ref:
+  - refs/heads/master
+  - "refs/tags/**"
+  - "refs/pull/**"
+
+---
+kind: pipeline
+name: build-and-publish
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: build-push
+  pull: always
+  image: golang:1.14
+  commands:
+  - go build -v -ldflags "-X main.version=${DRONE_COMMIT_SHA:0:8}" -a -tags netgo -o /go/bin/drone-circleci ./cmd/*.go
+  environment:
+    CGO_ENABLED: 0
+    GO111MODULE: on
+  when:
+    event:
+      exclude:
+      - tag
+  volumes:
+  - name: gopath
+    path: /go
+
+- name: build-tag
+  pull: always
+  image: golang:1.14
+  commands:
+  - go build -v -ldflags "-X main.version=${DRONE_TAG##v}" -a -tags netgo -o /go/bin/drone-circleci ./cmd/*.go
+  environment:
+    CGO_ENABLED: 0
+    GO111MODULE: on
+  when:
+    event:
+    - tag
+  volumes:
+  - name: gopath
+    path: /go
+
+- name: executable
+  pull: always
+  image: golang:1.14
+  commands:
+  - /go/bin/drone-circleci --help
+  volumes:
+  - name: gopath
+    path: /go
+
+- name: publish
+  pull: always
+  image: plugins/docker:18
+  settings:
+    repo: han0110/drone-circleci
+    dockerfile: docker/Dockerfile
+    auto_tag: true
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+  when:
+    event:
+      exclude:
+      - pull_request
+  volumes:
+  - name: gopath
+    path: /go
+
+volumes:
+- name: gopath
+  temp: {}
+
+trigger:
+  ref:
+  - refs/heads/master
+  - "refs/tags/**"
+  - "refs/pull/**"
+
+depends_on:
+- test
