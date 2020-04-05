@@ -1,6 +1,6 @@
 # Drone CircleCI
 
-[![Build Status](http://cloud.drone.io/api/badges/han0110/drone-circleci/status.svg)](http://cloud.drone.io/han0110/drone-circleci)
+[![Build Status](https://cloud.drone.io/api/badges/han0110/drone-circleci/status.svg?ref=refs/heads/master)](https://cloud.drone.io/han0110/drone-circleci)
 
 Drone plugin for CircleCI integration
 
