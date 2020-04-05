@@ -53,7 +53,7 @@ steps:
   pull: always
   image: golang:1.14
   commands:
-  - go build -v -ldflags "-X main.version=${DRONE_COMMIT_SHA:0:8}" -a -tags netgo -o /go/bin/drone-circleci ./cmd/*.go
+  - go build -v -ldflags "-X main.version=${DRONE_COMMIT_SHA:0:8}" -a -tags netgo -o ./release/drone-circleci ./cmd/*.go
   environment:
     CGO_ENABLED: 0
     GO111MODULE: on
@@ -61,33 +61,35 @@ steps:
     event:
       exclude:
       - tag
-  volumes:
-  - name: gopath
-    path: /go
 
 - name: build-tag
   pull: always
   image: golang:1.14
   commands:
-  - go build -v -ldflags "-X main.version=${DRONE_TAG##v}" -a -tags netgo -o /go/bin/drone-circleci ./cmd/*.go
+  - go build -v -ldflags "-X main.version=${DRONE_TAG##v}" -a -tags netgo -o ./release/drone-circleci ./cmd/*.go
   environment:
     CGO_ENABLED: 0
     GO111MODULE: on
   when:
     event:
     - tag
-  volumes:
-  - name: gopath
-    path: /go
 
 - name: executable
   pull: always
   image: golang:1.14
   commands:
-  - /go/bin/drone-circleci --help
-  volumes:
-  - name: gopath
-    path: /go
+  - ./release/drone-circleci --help
+
+- name: publish-dryrun
+  pull: always
+  image: plugins/docker:18
+  settings:
+    repo: han0110/drone-circleci
+    dry_run: true
+    dockerfile: docker/Dockerfile
+  when:
+    event:
+    - pull_request
 
 - name: publish
   pull: always
@@ -104,13 +106,6 @@ steps:
     event:
       exclude:
       - pull_request
-  volumes:
-  - name: gopath
-    path: /go
-
-volumes:
-- name: gopath
-  temp: {}
 
 trigger:
   ref:
