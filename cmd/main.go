@@ -54,7 +54,7 @@ func main() {
 		cli.StringFlag{
 			Name:   "wait.branch",
 			Usage:  "commit branch to wait",
-			EnvVar: "PLUGIN_WAIT_BRANCH,DRONE_COMMIT_BRANCH",
+			EnvVar: "PLUGIN_WAIT_BRANCH,DRONE_SOURCE_BRANCH",
 		},
 		cli.StringFlag{
 			Name:   "wait.workflow",
